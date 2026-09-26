@@ -505,3 +505,22 @@ h1, h2, h3, p { margin-top: 0; }
   .version-compare > svg { transform: rotate(90deg); }
   .settings-menu { padding: .7rem; }
 }
+.regulation-toolbar { display: flex; justify-content: flex-end; margin: 0 0 1rem; }
+.regulation-state { min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .8rem; text-align: center; }
+.regulation-state p { margin: 0 0 .4rem; }
+.regulation-alert { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.regulation-overlay { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 1rem; background: rgba(26, 20, 31, .48); backdrop-filter: blur(5px); }
+.regulation-dialog { width: min(720px, 100%); max-height: min(88vh, 900px); overflow: auto; box-shadow: 0 24px 80px rgba(23, 14, 32, .25); }
+.regulation-dialog > .section-head { margin-bottom: 1.4rem; }
+.regulation-dialog h2 { overflow-wrap: anywhere; }
+.regulation-dialog .form-stack { gap: 1rem; }
+.regulation-dialog textarea, .regulation-dialog select { width: 100%; border: 1px solid rgba(46, 36, 54, .14); border-radius: 12px; padding: .8rem .9rem; color: inherit; background: rgba(255, 255, 255, .76); font: inherit; }
+.regulation-dialog input[type="file"] { width: 100%; min-width: 0; font: inherit; }
+.regulation-dialog .journey-card { align-items: center; gap: .8rem; }
+.regulation-dialog .journey-card > div { min-width: 0; }
+.regulation-dialog .journey-card h3, .regulation-dialog .journey-card p { overflow-wrap: anywhere; }
+.regulation-details > .form-grid { margin: 1.5rem 0; }
+.regulation-details > h3 { margin-top: 1.8rem; }
+.spin { animation: regulation-spin 1s linear infinite; }
+@keyframes regulation-spin { to { transform: rotate(360deg); } }
+@media (max-width: 640px) { .regulation-dialog { padding: 1rem; max-height: 92vh; } .regulation-dialog .journey-card { align-items: flex-start; flex-wrap: wrap; } .regulation-dialog .journey-card > div { flex: 1 1 100%; } }
