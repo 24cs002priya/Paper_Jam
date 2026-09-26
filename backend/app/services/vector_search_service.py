@@ -55,8 +55,15 @@ async def search_chunks(request: RAGRequest) -> list[dict]:
         {"$project": {
             "_id": 1, "regulation_id": 1, "version_id": 1, "text": 1,
             "page_start": 1, "page_end": 1, "section": 1, "score": 1,
+            "subsection": 1, "chunk_index": 1, "metadata": 1,
             "regulation_name": "$regulation.name", "source_url": "$regulation.source_url",
+            "authority": "$regulation.issuing_authority",
+            "department_name": "$regulation.department_name",
+            "jurisdiction": "$regulation.jurisdiction",
+            "document_type": "$regulation.document_type",
             "version": "$version_doc.version", "file_name": "$version_doc.file_name",
+            "effective_date": "$version_doc.effective_date",
+            "published_date": "$version_doc.published_date",
         }},
     ]
     return await get_database().regulation_chunks.aggregate(pipeline).to_list(length=k)

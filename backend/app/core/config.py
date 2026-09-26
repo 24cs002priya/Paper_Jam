@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     mongodb_database: str = "paper_jam"
     groq_api_key: SecretStr = SecretStr("")
     groq_model: str = "openai/gpt-oss-20b"
+    groq_fallback_model: str = "openai/gpt-oss-120b"
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     rag_top_k: int = 5
     admin_email: str = ""

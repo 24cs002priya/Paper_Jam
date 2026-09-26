@@ -35,6 +35,8 @@ async def create_business(payload: BusinessCreate, user: dict = Depends(require_
     business.update({"owner_user_id": user["_id"], "status": "draft", "created_at": now, "updated_at": now})
     result = await get_database().businesses.insert_one(business)
     business["_id"] = result.inserted_id
+    from app.services.passport_service import ensure_passport
+    await ensure_passport(result.inserted_id, db=get_database())
     await get_database().users.update_one({"_id": user["_id"]}, {"$addToSet": {"business_ids": result.inserted_id}, "$set": {"updated_at": now}})
     await record_audit("BUSINESS_CREATED", actor_id=user["_id"], target_type="business", target_id=result.inserted_id)
     return serialize_business(business)

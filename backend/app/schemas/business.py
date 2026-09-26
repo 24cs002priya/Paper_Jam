@@ -59,6 +59,7 @@ class BusinessProfileUpdate(BaseModel):
     contact_person: dict[str, str | None] | None = None
     employee_count: int | None = Field(default=None, ge=0)
     annual_turnover: float | None = Field(default=None, ge=0)
+    production_capacity_kg_per_day: float | None = Field(default=None, ge=0)
     business_activities: list[str] | None = Field(default=None, max_length=100)
     location_details: dict[str, str | None] | None = None
 
@@ -96,16 +97,7 @@ class BusinessProfileUpdate(BaseModel):
 
 class BusinessApplicationCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    approval_type: str = Field(min_length=1, max_length=120)
-    approval_name: str = Field(min_length=1, max_length=200)
-
-    @field_validator("approval_type", "approval_name")
-    @classmethod
-    def clean_application_text(cls, value: str) -> str:
-        value = " ".join(value.split())
-        if not value:
-            raise ValueError("This field cannot be blank")
-        return value
+    approval_id: str = Field(min_length=24, max_length=24, pattern=r"^[0-9a-fA-F]{24}$")
 
 
 class BusinessApplicationUpdate(BaseModel):

@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import admin_regulations, auth, businesses, business_workspace, rag, users
+from app.api import admin_regulations, approval_engine, auth, businesses, business_workspace, rag, users
 from app.core.config import get_settings
 from app.core.security import hash_password
 from app.db.indexes import ensure_indexes
@@ -93,6 +93,9 @@ app.include_router(users.admin_router, prefix=settings.api_prefix)
 app.include_router(users.audit_router, prefix=settings.api_prefix)
 app.include_router(businesses.router, prefix=settings.api_prefix)
 app.include_router(business_workspace.router, prefix=settings.api_prefix)
+app.include_router(business_workspace.admin_router, prefix=settings.api_prefix)
+app.include_router(approval_engine.router, prefix=settings.api_prefix)
+app.include_router(approval_engine.admin_router, prefix=settings.api_prefix)
 app.include_router(admin_regulations.router, prefix=settings.api_prefix)
 app.include_router(rag.router, prefix=settings.api_prefix)
 

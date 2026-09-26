@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from bson import ObjectId
 import re
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.security import OAuth2PasswordRequestForm
 from pymongo.errors import DuplicateKeyError
@@ -98,7 +98,7 @@ async def me(user: dict = Depends(get_current_user)) -> PublicUser:
 
 
 @router.post("/business/signup", status_code=201)
-async def business_signup(payload: BusinessSignupRequest):
+async def business_signup(payload: BusinessSignupRequest, background_tasks: BackgroundTasks):
     db = get_database()
     email = str(payload.email).strip().lower()
     if (await db.business_users.find_one({"email_normalized": email}, {"_id": 1})
@@ -106,6 +106,7 @@ async def business_signup(payload: BusinessSignupRequest):
         raise HTTPException(status_code=409, detail="An account with this email already exists")
     now = datetime.now(timezone.utc)
     business_id = ObjectId()
+    approval_request_id = ObjectId()
     user = {"business_id": business_id, "name": payload.full_name, "full_name": payload.full_name,
             "email": email, "email_normalized": email, "phone": payload.phone,
             "password_hash": hash_password(payload.password), "role": "business_owner", "status": "active",
@@ -116,7 +117,7 @@ async def business_signup(payload: BusinessSignupRequest):
                 "registration_number": None, "pan": None, "gstin": None, "email": email, "phone": payload.phone,
                 "registered_address": {}, "operating_address": {}, "contact_person": {"name": payload.full_name, "email": email, "phone": payload.phone},
                 "employee_count": None, "annual_turnover": None, "business_activities": [], "location_details": {},
-                "status": "active", "profile_completion": 0, "created_at": now, "updated_at": now}
+                "status": "active", "profile_completion": 0, "approval_engine_status": "queued", "approval_engine_request_id": approval_request_id, "created_at": now, "updated_at": now}
     business["profile_completion"] = calculate_profile_completion(business)["percentage"]
     try:
         inserted = await db.business_users.insert_one(user)
@@ -124,6 +125,8 @@ async def business_signup(payload: BusinessSignupRequest):
         business["user_id"] = inserted.inserted_id
         business["owner_user_id"] = inserted.inserted_id
         await db.businesses.insert_one(business)
+        from app.services.passport_service import ensure_passport
+        await ensure_passport(business_id, db=db)
     except DuplicateKeyError as exc:
         if user.get("_id"):
             await db.business_users.delete_one({"_id": user["_id"]})
@@ -134,6 +137,8 @@ async def business_signup(payload: BusinessSignupRequest):
         raise
     token = create_access_token(str(user["_id"]), role=user["role"], email=email, business_id=str(business_id))
     await record_audit("business_signup", actor_id=user["_id"], business_id=business_id, target_type="business", target_id=business_id)
+    from app.api.approval_engine import run_generation_task
+    background_tasks.add_task(run_generation_task, str(business_id), str(approval_request_id))
     return {"access_token": token, "token_type": "bearer", "user": public_user(user), "business": _business_public(business), "expires_in": get_settings().jwt_expire_minutes * 60}
 
 
@@ -185,4 +190,5 @@ async def business_logout(token: str = Depends(business_bearer), user: dict = De
 def _business_public(record: dict | None):
     if not record:
         return None
-    return {key: (str(value) if key == "_id" else value) for key, value in record.items() if key not in {"user_id", "owner_user_id"}}
+    internal = {"user_id", "owner_user_id", "approval_engine_request_id", "approval_context_hash", "approval_generation_id"}
+    return {key: (str(value) if key == "_id" else value) for key, value in record.items() if key not in internal}

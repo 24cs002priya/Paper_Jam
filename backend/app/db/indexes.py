@@ -32,6 +32,9 @@ async def ensure_indexes() -> None:
     await db.business_users.create_index([("business_id", ASCENDING), ("role", ASCENDING)], name="business_users_business_role")
     await db.businesses.create_index([("user_id", ASCENDING)], unique=True, sparse=True, name="businesses_user_unique")
     await db.business_documents.create_index([("business_id", ASCENDING), ("uploaded_at", DESCENDING)], name="business_documents_business_uploaded")
+    await db.business_documents.create_index([("business_id", ASCENDING), ("document_type_key", ASCENDING), ("version", DESCENDING)], name="business_documents_business_type_version")
+    await db.business_document_counters.create_index([("business_id", ASCENDING), ("document_type_key", ASCENDING)], unique=True, name="business_document_counter_unique")
+    await db.approval_passports.create_index([("business_id", ASCENDING)], unique=True, name="approval_passports_business_unique")
     await db.applications.create_index([("business_id", ASCENDING), ("updated_at", DESCENDING)], name="applications_business_updated")
     await db.applications.create_index([("business_id", ASCENDING), ("status", ASCENDING)], name="applications_business_status")
     await db.application_actions.create_index([("business_id", ASCENDING), ("status", ASCENDING)], name="actions_business_status")
@@ -39,6 +42,13 @@ async def ensure_indexes() -> None:
     await db.regulation_changes.create_index([("business_id", ASCENDING), ("created_at", DESCENDING)], name="changes_business_created")
     await db.audit_logs.create_index([("business_id", ASCENDING), ("created_at", DESCENDING)], name="audit_business_created")
     await db.revoked_tokens.create_index([("expires_at", ASCENDING)], expireAfterSeconds=0, name="revoked_tokens_ttl")
+    await db.approval_results.create_index([("business_id", ASCENDING), ("generation_id", ASCENDING)], name="approval_results_business_generation")
+    await db.approval_rules.create_index([("business_id", ASCENDING), ("generation_id", ASCENDING)], name="approval_rules_business_generation")
+    await db.approval_engine_runs.create_index([("business_id", ASCENDING), ("created_at", DESCENDING)], name="approval_runs_business_created")
+    existing_roadmap_indexes = await db.approval_roadmaps.index_information()
+    if "approval_roadmaps_business_unique" in existing_roadmap_indexes:
+        await db.approval_roadmaps.drop_index("approval_roadmaps_business_unique")
+    await db.approval_roadmaps.create_index([("business_id", ASCENDING), ("generation_id", ASCENDING)], unique=True, name="approval_roadmaps_business_generation_unique")
     # Atlas Search indexes are managed via Atlas APIs or the Atlas UI. An exact
     # dimensioned JSON definition is emitted at startup once the model loads.
     _ = get_settings().vector_index_name
